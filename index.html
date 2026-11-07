@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#236b4b">
+  <meta name="description" content="Acompanhe suas contas e parcelas em um só lugar.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+  <title>Meu Baú</title>
+</head>
+<body>
+  <main class="shell">
+    <header class="topline"><a class="brand" href="#"><span class="brand-icon">▣</span> Meu Baú</a><span id="connection" class="connection">Salvo neste aparelho</span></header>
+    <section id="appView">
+      <header class="hero"><div><div class="eyebrow">Organização financeira</div><h1>Contas sob controle.</h1><p class="muted">As alterações ficam salvas neste navegador.</p></div><div class="hero-actions"><button class="secondary" id="incomeBtn">Renda</button><button class="primary" id="addBtn">＋ Nova conta</button></div></header>
+      <p class="public-note">Sem login: se este site for publicado, qualquer pessoa poderá ver as contas iniciais desta página. As alterações feitas depois ficam só neste navegador.</p>
+      <div class="summary">
+        <article class="stat"><span>Salário restante</span><strong id="salaryLeft">R$ 0,00</strong><small>Após contas comuns do mês</small></article>
+        <article class="stat accent"><span>Em aberto no mês</span><strong id="openTotal">R$ 0,00</strong><small id="openCount">0 contas</small></article>
+        <article class="stat"><span>Vale-refeição restante</span><strong id="mealLeft">R$ 0,00</strong><small>Somente para refeições</small></article>
+      </div>
+      <section class="report">
+        <div class="section-head"><h2>Relatório mensal</h2><select id="reportMonth" aria-label="Mês do relatório"></select></div>
+        <div class="report-grid"><div><span>Total das contas</span><strong id="monthTotal">R$ 0,00</strong></div><div><span>Já pagas</span><strong id="monthPaid">R$ 0,00</strong></div><div><span>Falta pagar</span><strong id="monthDue">R$ 0,00</strong></div></div>
+        <div class="paid-report"><b>Contas pagas neste mês</b><div id="paidList" class="muted small"></div></div>
+      </section>
+      <div class="section-head list-head"><h2>Meu baú de contas</h2><div class="filters"><select id="statusFilter" aria-label="Filtrar situação"><option value="all">Todas</option><option value="open">Em aberto</option><option value="paid">Pagas</option></select><input id="search" type="search" placeholder="Buscar conta…"></div></div>
+      <div id="billList"></div>
+      <div class="bottom-actions"><button class="secondary" id="importBtn">Importar backup</button><button class="secondary" id="exportBtn">Baixar backup</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
+      <p class="muted small">As contas ficam neste navegador e não sincronizam automaticamente com outros aparelhos. As contas comuns são descontadas do salário; o vale cobre apenas refeições.</p>
+    </section>
+  </main>
+  <dialog id="billDialog"><form id="billForm" class="modal" method="dialog"><div class="section-head"><h2 id="billTitle">Nova conta</h2><button type="button" class="close" data-close="billDialog">×</button></div><input id="billId" type="hidden"><label>Nome da conta<input id="billName" maxlength="70" required placeholder="Ex.: Fatura do Nubank"></label><div class="two-col"><label>Valor de cada parcela<input id="billAmount" type="number" min="0.01" step="0.01" required></label><label>Vencimento da 1ª parcela<input id="billDue" type="date" required></label><label>Quantidade de parcelas<input id="billCount" type="number" min="1" max="60" value="1" required></label><label>Tipo de gasto<select id="billCategory"><option value="general">Conta comum</option><option value="meal">Refeição (vale)</option></select></label><label>Situação da 1ª parcela<select id="billPaid"><option value="false">Em aberto</option><option value="true">Paga</option></select></label></div><p class="muted small">Parcelas são criadas mês a mês na mesma data. O vale só cobre contas de refeição.</p><div class="form-actions"><button class="secondary" type="button" data-close="billDialog">Cancelar</button><button class="primary" type="submit">Salvar</button></div></form></dialog>
+  <dialog id="incomeDialog"><form id="incomeForm" class="modal" method="dialog"><div class="section-head"><h2>Minha renda</h2><button type="button" class="close" data-close="incomeDialog">×</button></div><label>Salário mensal<input id="salaryInput" type="number" min="0" step="0.01" required></label><label>Vale-refeição mensal<input id="mealInput" type="number" min="0" step="0.01" required></label><p class="muted small">O vale-refeição fica separado e só é abatido de contas categorizadas como refeição.</p><div class="form-actions"><button class="secondary" type="button" data-close="incomeDialog">Cancelar</button><button class="primary" type="submit">Salvar renda</button></div></form></dialog>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
