@@ -2,6 +2,7 @@ const DB_KEY = 'meu-bau-contas-v1';
 const SETTINGS_KEY = 'meu-bau-renda-local-v1';
 const INITIAL_KEY = 'meu-bau-initialized-v2';
 const AIRCON_KEY = 'meu-bau-aircon-feb-2027';
+const EXTRA_BILLS_KEY = 'meu-bau-extra-bills-v1';
 const DEFAULT_SETTINGS = { salary: 1621, meal_voucher: 360 };
 const $ = id => document.getElementById(id);
 const money = value => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -11,8 +12,8 @@ const dateLabel = value => { const [year, month, day] = value.split('-'); return
 const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 const initialBills = [
-  { id: 'renner', name: 'Fatura da Renner', amount: 81, due: '2026-11-10', paid: false, category: 'general' },
-  { id: 'shopee-1', name: 'Fatura da Shopee', amount: 45, due: '2026-11-10', paid: false, category: 'general', installment: '1/3' },
+  { id: 'renner', name: 'Fatura da Renner', amount: 81, due: '2026-11-10', paid: true, category: 'general' },
+  { id: 'shopee-1', name: 'Fatura da Shopee', amount: 45, due: '2026-11-10', paid: true, category: 'general', installment: '1/3' },
   { id: 'shopee-2', name: 'Fatura da Shopee', amount: 45, due: '2026-12-10', paid: false, category: 'general', installment: '2/3' },
   { id: 'shopee-3', name: 'Fatura da Shopee', amount: 45, due: '2027-01-10', paid: false, category: 'general', installment: '3/3' },
   { id: 'nubank-nov', name: 'Fatura Nubank', amount: 30, due: '2026-11-08', paid: false, category: 'general' },
@@ -34,6 +35,25 @@ function shiftMonth(isoDate, offset) {
   const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
   return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
 }
+function monthlyInstallments(id, name, amount, firstDue, count, firstPaid = false) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `${id}-${index + 1}`,
+    name,
+    amount,
+    due: shiftMonth(firstDue, index),
+    paid: firstPaid && index === 0,
+    category: 'general',
+    installment: `${index + 1}/${count}`
+  }));
+}
+
+const extraBills = [
+  { id: 'cilios-2026-11', name: 'Fatura Cílios', amount: 130, due: '2026-11-06', paid: true, category: 'general' },
+  ...monthlyInstallments('moto', 'Parcela da Moto', 490, '2026-11-05', 25, true),
+  ...monthlyInstallments('gazin', 'Fatura Gazin', 55, '2026-12-10', 12),
+  ...monthlyInstallments('vivo-mensal', 'Fatura Vivo', 35, '2026-12-17', 12)
+];
+
 function cleanBill(row) {
   return { ...row, amount: Number(row.amount), paid: Boolean(row.paid), category: row.category || 'general', installment: row.installment || '' };
 }
@@ -59,7 +79,9 @@ function expandOldInstallments(rows) {
 
 let bills = [];
 const storedBills = JSON.parse(localStorage.getItem(DB_KEY) || 'null');
-const sameBill = (a, b) => a.id === b.id || (a.name === b.name && a.due === b.due && a.amount === b.amount);
+const sameBill = (a, b) => a.id === b.id ||
+  (a.name.trim().toLocaleLowerCase('pt-BR') === b.name.trim().toLocaleLowerCase('pt-BR') &&
+    a.due === b.due && (a.amount === b.amount || (b.installment && a.installment === b.installment)));
 if (Array.isArray(storedBills) && localStorage.getItem(INITIAL_KEY)) bills = expandOldInstallments(storedBills);
 else if (Array.isArray(storedBills)) {
   bills = expandOldInstallments(storedBills);
@@ -72,12 +94,18 @@ if (!localStorage.getItem(AIRCON_KEY)) {
     if (['aircon-2026-12', 'aircon-2027-01'].includes(bill.id) && /^[12]\/2$/.test(bill.installment)) bill.installment = '';
   }
 }
+if (!localStorage.getItem(EXTRA_BILLS_KEY)) {
+  for (const bill of extraBills) {
+    if (!bills.some(item => sameBill(item, bill))) bills.push({ ...bill });
+  }
+}
 const oldIncome = JSON.parse(localStorage.getItem('meu-bau-renda-v1') || 'null');
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null') || (oldIncome ? { salary: Number(oldIncome.salary), meal_voucher: Number(oldIncome.benefit) } : { ...DEFAULT_SETTINGS });
 localStorage.setItem(DB_KEY, JSON.stringify(bills));
 localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 localStorage.setItem(INITIAL_KEY, 'true');
 localStorage.setItem(AIRCON_KEY, 'true');
+localStorage.setItem(EXTRA_BILLS_KEY, 'true');
 
 function toast(message) {
   $('toast').textContent = message;
